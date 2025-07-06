@@ -1,0 +1,24 @@
+apiVersion: v2
+name: fineract-chart
+description: A Helm chart for deploying Apache Fineract microfinance platform
+type: application
+version: 0.1.0
+appVersion: "develop"
+icon: https://fineract.apache.org/img/fineract_logo.png
+home: https://fineract.apache.org/
+sources:
+  - https://github.com/apache/fineract
+  - https://github.com/bamanyisa/fineract-chart
+maintainers:
+  - name: Vien Bamanyisa
+    email: bamanyisa@outlook.com
+keywords:
+  - fineract
+  - mifos
+  - microfinance
+  - banking
+  - fintech
+  - apache
+annotations:
+  category: Finance
+  licenses: Apache-2.0

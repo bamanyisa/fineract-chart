@@ -1,0 +1,50 @@
+replicaCount: 1
+
+image:
+  repository: apache/fineract
+  tag: develop
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 8080
+
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+  requests:
+    cpu: "200m"
+    memory: "512Mi"
+
+env:
+  timezone: Asia/Kolkata
+  sslEnabled: false
+  loggingLevel: INFO
+
+database:
+  host: keycloak-postgresql
+  port: 5432
+  name: fineract_default
+  identifier: default
+  description: Default Demo Tenant
+  secretName: fineract-tenants-db-secret
+  usernameKey: username
+  passwordKey: password
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: fineract.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

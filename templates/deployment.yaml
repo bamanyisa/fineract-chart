@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fineract-server
+  labels:
+    app: fineract-server
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: fineract-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: fineract-server
+    spec:
+      initContainers:
+        - name: init-db
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              echo "Checking for PostgreSQL..."
+              while ! nc -z {{ .Values.database.host }} {{ .Values.database.port }}; do
+                sleep 1
+              done
+      containers:
+        - name: fineract-server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          env:
+            - name: FINERACT_NODE_ID
+              value: "1"
+            - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
+              value: org.postgresql.Driver
+            - name: FINERACT_HIKARI_JDBC_URL
+              value: "jdbc:postgresql://{{ .Values.database.host }}:{{ .Values.database.port }}/fineract_tenants"
+            - name: FINERACT_HIKARI_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: {{ .Values.database.usernameKey }}
+            - name: FINERACT_HIKARI_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: {{ .Values.database.passwordKey }}
+            - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
+              value: "{{ .Values.database.host }}"
+            - name: FINERACT_DEFAULT_TENANTDB_PORT
+              value: "{{ .Values.database.port }}"
+            - name: FINERACT_DEFAULT_TENANTDB_UID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: {{ .Values.database.usernameKey }}
+            - name: FINERACT_DEFAULT_TENANTDB_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: {{ .Values.database.passwordKey }}
+            - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
+              value: ""
+            - name: FINERACT_DEFAULT_TENANTDB_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
+            - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
+              value: "{{ .Values.database.identifier }}"
+            - name: FINERACT_DEFAULT_TENANTDB_NAME
+              value: "{{ .Values.database.name }}"
+            - name: FINERACT_DEFAULT_TENANTDB_DESCRIPTION
+              value: "{{ .Values.database.description }}"
+            - name: FINERACT_SERVER_SSL_ENABLED
+              value: "{{ .Values.env.sslEnabled }}"
+            - name: FINERACT_LOGGING_LEVEL
+              value: "{{ .Values.env.loggingLevel }}"
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xmx1G"
+          resources:
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+          livenessProbe:
+            httpGet:
+              path: /fineract-provider/actuator/health
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /fineract-provider/actuator/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
