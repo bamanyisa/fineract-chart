@@ -38,51 +38,51 @@ spec:
               name: http
           env:
             - name: FINERACT_NODE_ID
-              value: "1"
+              value: "{{ .Values.fineractEnv.FINERACT_NODE_ID }}"
             - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
-              value: org.postgresql.Driver
+              value: "{{ .Values.fineractEnv.FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME }}"
             - name: FINERACT_HIKARI_JDBC_URL
-              value: "jdbc:postgresql://{{ .Values.database.host }}:{{ .Values.database.port }}/fineract_tenants"
+              value: "{{ .Values.fineractEnv.FINERACT_HIKARI_JDBC_URL }}"
             - name: FINERACT_HIKARI_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.database.secretName }}
-                  key: {{ .Values.database.usernameKey }}
+                  key: {{ .Values.fineractEnv.FINERACT_HIKARI_USERNAME_KEY }}
             - name: FINERACT_HIKARI_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.database.secretName }}
-                  key: {{ .Values.database.passwordKey }}
+                  key: {{ .Values.fineractEnv.FINERACT_HIKARI_PASSWORD_KEY }}
             - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
-              value: "{{ .Values.database.host }}"
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_HOSTNAME }}"
             - name: FINERACT_DEFAULT_TENANTDB_PORT
-              value: "{{ .Values.database.port }}"
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_PORT }}"
             - name: FINERACT_DEFAULT_TENANTDB_UID
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.database.secretName }}
-                  key: {{ .Values.database.usernameKey }}
+                  key: {{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_UID_KEY }}
             - name: FINERACT_DEFAULT_TENANTDB_PWD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.database.secretName }}
-                  key: {{ .Values.database.passwordKey }}
+                  key: {{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_PWD_KEY }}
             - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
-              value: ""
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_CONN_PARAMS }}"
             - name: FINERACT_DEFAULT_TENANTDB_TIMEZONE
-              value: "{{ .Values.env.timezone }}"
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_TIMEZONE }}"
             - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
-              value: "{{ .Values.database.identifier }}"
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_IDENTIFIER }}"
             - name: FINERACT_DEFAULT_TENANTDB_NAME
-              value: "{{ .Values.database.name }}"
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_NAME }}"
             - name: FINERACT_DEFAULT_TENANTDB_DESCRIPTION
-              value: "{{ .Values.database.description }}"
+              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_DESCRIPTION }}"
             - name: FINERACT_SERVER_SSL_ENABLED
-              value: "{{ .Values.env.sslEnabled }}"
+              value: "{{ .Values.fineractEnv.FINERACT_SERVER_SSL_ENABLED }}"
             - name: FINERACT_LOGGING_LEVEL
-              value: "{{ .Values.env.loggingLevel }}"
+              value: "{{ .Values.fineractEnv.FINERACT_LOGGING_LEVEL }}"
             - name: JAVA_TOOL_OPTIONS
-              value: "-Xmx1G"
+              value: "{{ .Values.fineractEnv.JAVA_TOOL_OPTIONS }}"
           resources:
             limits:
               cpu: {{ .Values.resources.limits.cpu | quote }}

@@ -17,20 +17,29 @@ resources:
     cpu: "200m"
     memory: "512Mi"
 
-env:
-  timezone: Asia/Kolkata
-  sslEnabled: false
-  loggingLevel: INFO
+fineractEnv:
+  FINERACT_NODE_ID: "1"
+  FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: org.postgresql.Driver
+  FINERACT_HIKARI_JDBC_URL: "jdbc:postgresql://keycloak-postgresql:5432/fineract_tenants"
+  FINERACT_HIKARI_USERNAME_KEY: username
+  FINERACT_HIKARI_PASSWORD_KEY: password
+  FINERACT_DEFAULT_TENANTDB_HOSTNAME: keycloak-postgresql
+  FINERACT_DEFAULT_TENANTDB_PORT: "5432"
+  FINERACT_DEFAULT_TENANTDB_UID_KEY: username
+  FINERACT_DEFAULT_TENANTDB_PWD_KEY: password
+  FINERACT_DEFAULT_TENANTDB_CONN_PARAMS: ""
+  FINERACT_DEFAULT_TENANTDB_TIMEZONE: Asia/Kolkata
+  FINERACT_DEFAULT_TENANTDB_IDENTIFIER: default
+  FINERACT_DEFAULT_TENANTDB_NAME: fineract_default
+  FINERACT_DEFAULT_TENANTDB_DESCRIPTION: "Default Demo Tenant"
+  FINERACT_SERVER_SSL_ENABLED: "false"
+  FINERACT_LOGGING_LEVEL: INFO
+  JAVA_TOOL_OPTIONS: "-Xmx1G"
 
 database:
   host: keycloak-postgresql
   port: 5432
-  name: fineract_default
-  identifier: default
-  description: Default Demo Tenant
   secretName: fineract-tenants-db-secret
-  usernameKey: username
-  passwordKey: password
 
 ingress:
   enabled: false
