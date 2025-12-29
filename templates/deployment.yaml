@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fineract-server
+  name: {{ include "fineract-chart.fullname" . }}
   labels:
     app: fineract-server
 spec:
   {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount | default 1 }}
+  replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
@@ -19,15 +19,15 @@ spec:
         app: fineract-server
     spec:
       initContainers:
-        - name: init-db
+        - name: wait-for-db
           image: busybox:1.28
           command:
             - sh
             - -c
             - |
-              echo "Checking for PostgreSQL..."
-              while ! nc -z {{ .Values.database.host }} {{ .Values.database.port }}; do
-                sleep 1
+              until nc -z {{ .Values.database.host }} {{ .Values.database.port }}; do
+                echo "Waiting for DB at {{ .Values.database.host }}:{{ .Values.database.port }}..."
+                sleep 2
               done
       containers:
         - name: fineract-server
@@ -38,71 +38,48 @@ spec:
               name: http
           env:
             - name: FINERACT_NODE_ID
-              value: "{{ .Values.fineractEnv.FINERACT_NODE_ID }}"
+              value: "1"
+            - name: FINERACT_SERVER_PORT
+              value: "{{ .Values.fineractEnv.FINERACT_SERVER_PORT }}"
+            - name: FINERACT_SERVER_SSL_ENABLED
+              value: "{{ .Values.fineractEnv.FINERACT_SERVER_SSL_ENABLED }}"
             - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
               value: "{{ .Values.fineractEnv.FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME }}"
             - name: FINERACT_HIKARI_JDBC_URL
-              value: "{{ .Values.fineractEnv.FINERACT_HIKARI_JDBC_URL }}"
+              value: "jdbc:postgresql://{{ .Values.database.host }}:{{ .Values.database.port }}/fineract_tenants"
             - name: FINERACT_HIKARI_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.database.secretName }}
-                  key: {{ .Values.fineractEnv.FINERACT_HIKARI_USERNAME_KEY }}
+              value: "{{ .Values.database.username }}"
             - name: FINERACT_HIKARI_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.database.secretName }}
-                  key: {{ .Values.fineractEnv.FINERACT_HIKARI_PASSWORD_KEY }}
+              value: "{{ .Values.database.password }}"
             - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_HOSTNAME }}"
+              value: "{{ .Values.database.host }}"
             - name: FINERACT_DEFAULT_TENANTDB_PORT
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_PORT }}"
+              value: "{{ .Values.database.port }}"
             - name: FINERACT_DEFAULT_TENANTDB_UID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.database.secretName }}
-                  key: {{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_UID_KEY }}
+              value: "{{ .Values.database.username }}"
             - name: FINERACT_DEFAULT_TENANTDB_PWD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.database.secretName }}
-                  key: {{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_PWD_KEY }}
-            - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_CONN_PARAMS }}"
+              value: "{{ .Values.database.password }}"
             - name: FINERACT_DEFAULT_TENANTDB_TIMEZONE
               value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_TIMEZONE }}"
             - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_IDENTIFIER }}"
+              value: "default"
             - name: FINERACT_DEFAULT_TENANTDB_NAME
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_NAME }}"
-            - name: FINERACT_DEFAULT_TENANTDB_DESCRIPTION
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_DESCRIPTION }}"
-            - name: FINERACT_SERVER_SSL_ENABLED
-              value: "{{ .Values.fineractEnv.FINERACT_SERVER_SSL_ENABLED }}"
+              value: "fineract_default"
             - name: FINERACT_LOGGING_LEVEL
               value: "{{ .Values.fineractEnv.FINERACT_LOGGING_LEVEL }}"
             - name: JAVA_TOOL_OPTIONS
               value: "{{ .Values.fineractEnv.JAVA_TOOL_OPTIONS }}"
           resources:
-            limits:
-              cpu: {{ .Values.resources.limits.cpu | quote }}
-              memory: {{ .Values.resources.limits.memory | quote }}
-            requests:
-              cpu: {{ .Values.resources.requests.cpu | quote }}
-              memory: {{ .Values.resources.requests.memory | quote }}
+            {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /fineract-provider/actuator/health
               port: http
             initialDelaySeconds: 120
             periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /fineract-provider/actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3

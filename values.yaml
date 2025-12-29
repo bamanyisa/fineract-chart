@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: apache/fineract
-  tag: develop
+  repository: openmf/fineract
+  tag: 1.11.0
   pullPolicy: IfNotPresent
 
 service:
@@ -17,29 +17,23 @@ resources:
     cpu: "200m"
     memory: "512Mi"
 
+database:
+  host: "postgres-service-host"
+  port: 5432
+  username: "fineract"
+  password: "TiCUtALphoLSiD"
+
+extraDatabases:
+  - fineract_default
+  - fineract_tenants
+
 fineractEnv:
-  FINERACT_NODE_ID: "1"
-  FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: org.postgresql.Driver
-  FINERACT_HIKARI_JDBC_URL: "jdbc:postgresql://keycloak-postgresql:5432/fineract_tenants"
-  FINERACT_HIKARI_USERNAME_KEY: username
-  FINERACT_HIKARI_PASSWORD_KEY: password
-  FINERACT_DEFAULT_TENANTDB_HOSTNAME: keycloak-postgresql
-  FINERACT_DEFAULT_TENANTDB_PORT: "5432"
-  FINERACT_DEFAULT_TENANTDB_UID_KEY: username
-  FINERACT_DEFAULT_TENANTDB_PWD_KEY: password
-  FINERACT_DEFAULT_TENANTDB_CONN_PARAMS: ""
-  FINERACT_DEFAULT_TENANTDB_TIMEZONE: Asia/Kolkata
-  FINERACT_DEFAULT_TENANTDB_IDENTIFIER: default
-  FINERACT_DEFAULT_TENANTDB_NAME: fineract_default
-  FINERACT_DEFAULT_TENANTDB_DESCRIPTION: "Default Demo Tenant"
+  FINERACT_SERVER_PORT: "8080"
   FINERACT_SERVER_SSL_ENABLED: "false"
   FINERACT_LOGGING_LEVEL: INFO
   JAVA_TOOL_OPTIONS: "-Xmx1G"
-
-database:
-  host: keycloak-postgresql
-  port: 5432
-  secretName: fineract-tenants-db-secret
+  FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: org.postgresql.Driver
+  FINERACT_DEFAULT_TENANTDB_TIMEZONE: Asia/Kolkata
 
 ingress:
   enabled: false
@@ -57,3 +51,4 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
