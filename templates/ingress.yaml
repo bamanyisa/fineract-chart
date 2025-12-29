@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: {{ include "fineract-chart.fullname" . }}
   labels:
-    {{- include "fineract-chart.labels" . | nindent 4 }}
+    app: fineract-server
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -30,9 +30,7 @@ spec:
         paths:
           {{- range .paths }}
           - path: {{ .path }}
-            {{- with .pathType }}
-            pathType: {{ . }}
-            {{- end }}
+            pathType: {{ .pathType | default "Prefix" }}
             backend:
               service:
                 name: {{ include "fineract-chart.fullname" $ }}
