@@ -14,7 +14,10 @@ spec:
           image: bitnamilegacy/postgresql:14
           env:
             - name: PGPASSWORD
-              value: "{{ .Values.database.password }}"
+              valueFrom:
+                secretKeyRef:
+                  name: fineract-db-cluster-superuser
+                  key: password
           command:
             - sh
             - -c
