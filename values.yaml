@@ -22,6 +22,9 @@ database:
   port: 5432
   username: "fineract"
   password: "TiCUtALphoLSiD"
+  # Support for CNPG/External Secrets
+  secretName: ""
+  secretKey: "password"
 
 extraDatabases:
   - fineract_default

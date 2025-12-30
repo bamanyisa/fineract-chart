@@ -14,14 +14,23 @@ spec:
           image: bitnamilegacy/postgresql:14
           env:
             - name: PGPASSWORD
+              {{- if .Values.database.secretName }}
               valueFrom:
                 secretKeyRef:
-                  name: fineract-db-cluster-superuser
-                  key: password
+                  name: {{ .Values.database.secretName }}
+                  key: {{ .Values.database.secretKey | default "password" }}
+              {{- else }}
+              value: "{{ .Values.database.password }}"
+              {{- end }}
           command:
             - sh
             - -c
             - |
+              echo "Waiting for database..."
+              until pg_isready -h "{{ .Values.database.host }}" -p "{{ .Values.database.port }}" -U {{ .Values.database.username }}; do
+                sleep 2
+              done
+
               for db in {{ range .Values.extraDatabases }}{{ . }} {{ end }}; do
                 echo "Ensuring database $db exists..."
                 psql -h "{{ .Values.database.host }}" -p "{{ .Values.database.port }}" -U {{ .Values.database.username }} -d postgres \
