@@ -5,9 +5,7 @@ metadata:
   labels:
     app: fineract-server
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       app: fineract-server
@@ -26,7 +24,6 @@ spec:
             - -c
             - |
               until nc -z {{ .Values.database.host }} {{ .Values.database.port }}; do
-                echo "Waiting for DB at {{ .Values.database.host }}:{{ .Values.database.port }}..."
                 sleep 2
               done
       containers:
@@ -34,22 +31,15 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.service.port | default 8080 }}
+            - containerPort: {{ .Values.service.port }}
               name: http
           env:
             - name: FINERACT_NODE_ID
               value: "1"
-            - name: FINERACT_SERVER_PORT
-              value: "{{ .Values.fineractEnv.FINERACT_SERVER_PORT | default 8080 }}"
-            - name: FINERACT_SERVER_SSL_ENABLED
-              value: "{{ .Values.fineractEnv.FINERACT_SERVER_SSL_ENABLED | default "false" }}"
-            - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
-              value: "{{ .Values.fineractEnv.FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME | default "org.postgresql.Driver" }}"
             - name: FINERACT_HIKARI_JDBC_URL
               value: "jdbc:postgresql://{{ .Values.database.host }}:{{ .Values.database.port }}/fineract_tenants"
             - name: FINERACT_HIKARI_USERNAME
-              value: "{{ .Values.database.username }}"
-            
+              value: {{ .Values.database.username | quote }}
             - name: FINERACT_HIKARI_PASSWORD
               {{- if .Values.database.secretName }}
               valueFrom:
@@ -57,16 +47,14 @@ spec:
                   name: {{ .Values.database.secretName }}
                   key: {{ .Values.database.secretKey | default "password" }}
               {{- else }}
-              value: "{{ .Values.database.password }}"
+              value: {{ .Values.database.password | quote }}
               {{- end }}
-
             - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
-              value: "{{ .Values.database.host }}"
+              value: {{ .Values.database.host | quote }}
             - name: FINERACT_DEFAULT_TENANTDB_PORT
-              value: "{{ .Values.database.port }}"
+              value: {{ .Values.database.port | quote }}
             - name: FINERACT_DEFAULT_TENANTDB_UID
-              value: "{{ .Values.database.username }}"
-            
+              value: {{ .Values.database.username | quote }}
             - name: FINERACT_DEFAULT_TENANTDB_PWD
               {{- if .Values.database.secretName }}
               valueFrom:
@@ -74,30 +62,27 @@ spec:
                   name: {{ .Values.database.secretName }}
                   key: {{ .Values.database.secretKey | default "password" }}
               {{- else }}
-              value: "{{ .Values.database.password }}"
+              value: {{ .Values.database.password | quote }}
               {{- end }}
-
-            - name: FINERACT_DEFAULT_TENANTDB_TIMEZONE
-              value: "{{ .Values.fineractEnv.FINERACT_DEFAULT_TENANTDB_TIMEZONE | default "Asia/Kolkata" }}"
-            - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
-              value: "default"
             - name: FINERACT_DEFAULT_TENANTDB_NAME
               value: "fineract_default"
-            - name: FINERACT_LOGGING_LEVEL
-              value: "{{ .Values.fineractEnv.FINERACT_LOGGING_LEVEL | default "INFO" }}"
-            - name: JAVA_TOOL_OPTIONS
-              value: "{{ .Values.fineractEnv.JAVA_TOOL_OPTIONS }}"
+            - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
+              value: "default"
+            {{- range $key, $val := .Values.fineractEnv }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /fineract-provider/actuator/health
               port: http
-            initialDelaySeconds: 120
-            periodSeconds: 30
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
           readinessProbe:
             httpGet:
               path: /fineract-provider/actuator/health
               port: http
-            initialDelaySeconds: 60
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
